@@ -1,0 +1,26 @@
+{
+  "alive-status-codes": [200, 206, 999],
+  "ignore-patterns": [
+    {
+      "pattern": "^https://github\\.com/.*/blob/main/.*\\.md$"
+    },
+    {
+      "pattern": "^https://.*\\.example\\.com"
+    },
+    {
+      "pattern": "^https://localhost"
+    },
+    {
+      "pattern": "^http://localhost"
+    }
+  ],
+  "timeout": "30s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackHttpStatus": [
+    {
+      "codes": [403, 999],
+      "url": "https://github.com"
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+# YOLOv8s 訓練配置
+# 基於 YOLOv8s_0714@Kaggle.py 的最佳實踐
+
+# 訓練核心配置
+training:
+  # 基礎參數
+  model_size: "yolov8s"         # 模型大小
+  epochs: 300                   # 訓練輪數
+  batch_size: 64                # 基礎批次大小
+  img_size: 640                 # 輸入圖片大小
+  
+  # 學習率配置
+  lr0: 0.00038                  # 初始學習率 (來自最佳實踐)
+  lrf: 0.08                     # 最終學習率因子
+  momentum: 0.937               # 動量
+  weight_decay: 0.0006          # 權重衰減
+  
+  # 優化器配置
+  optimizer: "AdamW"            # 優化器選擇
+  cos_lr: true                  # 余弦學習率調度
+  
+  # 訓練策略
+  warmup_epochs: 5.0            # 熱身輪數
+  warmup_momentum: 0.8          # 熱身動量
+  
+  # 早停機制
+  patience: 40                  # 早停耐心值
+  save_period: 10               # 保存間隔
+  
+  # 時間限制
+  time_limit: 10                # 最高訓練時間 (小時)
+  
+  # 其他配置
+  single_cls: false             # 雙類別模式 (kumay, not_kumay)
+  plots: true                   # 生成訓練圖表
+  verbose: true                 # 詳細輸出
+
+# 損失函數配置
+loss:
+  # 損失權重 (基於黑熊檢測優化)
+  cls: 1.2                      # 分類損失權重
+  box: 0.05                     # 邊界框損失權重
+  dfl: 1.5                      # DFL 損失權重
+
+# 資料增強配置
+augmentation:
+  # HSV 增強
+  hsv_h: 0.015                  # 色調增強
+  hsv_s: 0.7                    # 飽和度增強
+  hsv_v: 0.4                    # 亮度增強
+  
+  # 幾何變換
+  degrees: 5                    # 旋轉角度
+  translate: 0.3                # 平移比例
+  scale: 0.24                   # 縮放比例
+  
+  # 翻轉增強
+  fliplr: 0.25                  # 水平翻轉機率
+  flipud: 0                     # 垂直翻轉機率
+  
+  # 混合增強
+  mosaic: 0.125                 # Mosaic 增強機率
+  mixup: 0.08                   # MixUp 增強機率
+  copy_paste: 0                 # Copy-Paste 增強機率
+  
+  # 增強控制
+  close_mosaic: 50              # 關閉 Mosaic 的輪數
+
+# 多GPU 配置
+multi_gpu:
+  # 基本設置
+  enable: true                  # 是否啟用多GPU
+  auto_detect: true             # 自動檢測GPU配置
+  
+  # 手動配置 (auto_detect=false 時使用)
+  device_ids: [0, 1]            # GPU 設備 ID
+  
+  # 分散式訓練
+  distributed: true             # 是否使用分散式訓練
+  
+  # 批次大小調整
+  auto_scale_batch: true        # 自動調整批次大小
+  batch_divisible: true         # 批次大小可被GPU數整除
+
+# 快取配置
+cache:
+  # 智能快取
+  enable: true                  # 啟用快取
+  auto_strategy: true           # 自動選擇策略
+  
+  # 候選路徑 (按優先級)
+  candidate_paths:
+    - "/kaggle/working/yolo_cache"
+    - "/kaggle/working/cache"
+    - "/tmp/yolo_cache"
+    - "/dev/shm/yolo_cache"
+  
+  # Worker 配置
+  workers: "auto"               # 自動配置worker數量
+  max_workers: 16               # 最大worker數量
+
+# 混合精度訓練
+amp:
+  enable: true                  # 啟用混合精度
+  opt_level: "O1"               # 優化級別
+
+# 檢查點配置
+checkpoint:
+  # 恢復訓練
+  auto_resume: true             # 自動恢復訓練
+  resume_from: null             # 指定檢查點路徑
+  
+  # 保存策略
+  save_best: true               # 保存最佳模型
+  save_last: true               # 保存最後模型
+  save_period: 10               # 保存間隔
+  
+  # 檢查點管理
+  max_checkpoints: 5            # 最大保留檢查點數
+  
+  # 檢查點搜索路徑
+  search_paths:
+    - "{project_dir}/{experiment_name}/weights/last.pt"
+    - "{project_dir}/{experiment_name}/weights/best.pt"
+    - "/kaggle/working/runs/train/{experiment_name}/weights/last.pt"
+    - "/kaggle/working/runs/train/{experiment_name}/weights/best.pt"
+
+# 錯誤恢復配置
+error_recovery:
+  enable: true                  # 啟用錯誤恢復
+  max_retries: 3                # 最大重試次數
+  
+  # 錯誤處理策略
+  strategies:
+    gpu_oom:                    # GPU 記憶體不足
+      reduce_batch_size: true   # 減少批次大小
+      min_batch_size: 1         # 最小批次大小
+    
+    device_error:               # 設備錯誤
+      fallback_single_gpu: true # 回退到單GPU
+      fallback_cpu: false       # 回退到CPU (不推薦)
+    
+    convergence_error:          # 收斂錯誤
+      reduce_lr: true           # 降低學習率
+      increase_patience: true   # 增加耐心值
+  
+  # 清理策略
+  cleanup_on_error: true        # 錯誤時清理GPU記憶體
+
+# 監控配置
+monitoring:
+  # 實時監控
+  enable: true                  # 啟用監控
+  
+  # 系統資源監控
+  gpu_monitoring: true          # GPU 監控
+  memory_monitoring: true       # 記憶體監控
+  cpu_monitoring: true          # CPU 監控
+  
+  # 訓練指標監控
+  loss_monitoring: true         # 損失監控
+  metric_monitoring: true       # 指標監控
+  
+  # 監控間隔
+  update_interval: 30           # 更新間隔 (秒)
+  log_interval: 100             # 日誌間隔 (步)
+
+# 實驗配置
+experiment:
+  # 實驗標識
+  name: "yolov8s_0808"          # 實驗名稱
+  description: "YOLOv8s 黑熊檢測 - 2025.08.08 版本"
+  tags: ["yolov8s", "bear_detection", "kaggle"]
+  
+  # 結果目錄
+  project_dir: "/kaggle/working/runs/train"
+  experiment_name: "yolov8s_0808"
+  
+  # 可重現性
+  seed: 42                      # 隨機種子
+  deterministic: false          # 確定性訓練 (可能影響性能)
+
+# 後處理配置
+post_processing:
+  # 驗證
+  run_validation: true          # 訓練後驗證
+  
+  # 模型導出
+  export_formats: ["onnx"]      # 導出格式
+  
+  # 清理
+  cleanup_cache: false          # 清理快取
+  cleanup_temp: false           # 清理臨時文件
+  
+  # 結果分析
+  generate_reports: true        # 生成分析報告
+  save_predictions: true        # 保存預測結果
+
+# 平台特定配置
+platform:
+  # Kaggle 特定配置
+  kaggle:
+    time_aware: true            # 時間感知訓練
+    space_efficient: true       # 空間效率優化
+    notebook_friendly: true     # Notebook 友好模式
+  
+  # 本地配置
+  local:
+    use_wandb: false            # 使用 W&B 記錄
+    use_tensorboard: true       # 使用 TensorBoard
+    save_full_logs: true        # 保存完整日誌
+
+# 警告抑制配置
+warnings:
+  suppress_libpng: true         # 抑制 libpng 警告
+  suppress_opencv: true         # 抑制 OpenCV 警告
+  suppress_pil: true            # 抑制 PIL 警告
+  
+  # 環境變數設置
+  env_vars:
+    PYTHONWARNINGS: "ignore::UserWarning"
+    OPENCV_IO_ENABLE_OPENEXR: "1"
+
+# 調試配置
+debug:
+  enable: false                 # 啟用調試模式
+  save_debug_info: false        # 保存調試信息
+  verbose_errors: true          # 詳細錯誤信息
+  
+  # 性能分析
+  profile_training: false       # 性能分析
+  memory_profiling: false       # 記憶體分析

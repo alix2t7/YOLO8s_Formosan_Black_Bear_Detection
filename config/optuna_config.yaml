@@ -1,0 +1,275 @@
+# Optuna 超參數優化配置
+# 基於 YOLOv8_Optuna_Optimizer.py 的最佳實踐
+
+# 優化基本配置
+optimization:
+  study_name: "yolov8s_bear_detection_v2"
+  storage: null                 # 數據庫存儲 (null 表示記憶體存儲)
+  direction: "maximize"         # 優化方向
+  
+  # 試驗配置
+  n_trials: 50                  # 總試驗次數
+  timeout: null                 # 超時時間 (秒)
+  
+  # 並行配置
+  n_jobs: 1                     # 並行任務數
+  
+  # 結果保存
+  save_study: true              # 保存研究結果
+  study_file: "optuna_study.pkl"
+
+# 搜索策略配置
+search_strategy:
+  # 採樣器類型
+  sampler: "TPE"                # TPE, Random, CmaEs, GP, NSGA2
+  
+  # TPE 特定配置
+  tpe:
+    n_startup_trials: 10        # 隨機初始試驗數
+    n_ei_candidates: 24         # EI 候選點數
+    gamma: 0.25                 # gamma 參數
+    
+  # 修剪器配置
+  pruning:
+    enable: true                # 是否啟用修剪
+    pruner: "MedianPruner"      # MedianPruner, HyperbandPruner
+    
+    # MedianPruner 配置
+    median:
+      n_startup_trials: 5       # 開始修剪前的試驗數
+      n_warmup_steps: 5         # 熱身步數
+      
+    # Hyperband 配置
+    hyperband:
+      min_resource: 10          # 最小資源
+      max_resource: 100         # 最大資源
+
+# 參數搜索範圍配置
+# 基於原始代碼的參數空間定義
+
+parameters:
+  # 🔴 最高優先度參數 (固定值，基於訓練腳本驗證)
+  fixed:
+    model_size: "yolov8s"       # 固定模型大小
+    optimizer: "AdamW"          # 固定優化器
+    batch_size: 128             # 固定基礎批次大小
+    img_size: 640               # 固定圖片大小
+    box_weight: 0.05            # 固定邊界框權重
+  
+  # 🟡 高優先度參數 (需要優化)
+  high_priority:
+    # 學習率策略
+    cos_lr:
+      type: "categorical"
+      choices: [true, false]
+    
+    lr0:
+      type: "float"
+      low: 2.0e-4
+      high: 8.0e-4
+      log: true
+    
+    lrf:
+      type: "float"
+      low: 0.05
+      high: 0.15
+      log: false
+    
+    # AdamW 特定參數
+    momentum:                   # beta1 for AdamW
+      type: "float"
+      low: 0.88
+      high: 0.92
+      log: false
+    
+    weight_decay:
+      type: "float"
+      low: 3.0e-4
+      high: 7.0e-4
+      log: false
+    
+    # 訓練策略
+    epochs:
+      type: "int"
+      low: 200
+      high: 280
+    
+    patience:
+      type: "int"
+      low: 25
+      high: 35
+    
+    warmup_epochs:
+      type: "float"
+      low: 3.0
+      high: 7.0
+  
+  # 🟢 中優先度參數 (損失函數權重)
+  medium_priority:
+    # 分類損失權重 (對黑熊檢測最重要)
+    cls_weight:
+      type: "float"
+      low: 1.1
+      high: 1.6
+      log: false
+    
+    # DFL 損失權重 (YOLOv8 重要參數)
+    dfl_weight:
+      type: "float"
+      low: 1.2
+      high: 1.8
+      log: false
+    
+    # 資料增強參數
+    hsv_h:
+      type: "float"
+      low: 0.03
+      high: 0.07
+    
+    hsv_s:
+      type: "float"
+      low: 0.15
+      high: 0.35
+    
+    hsv_v:
+      type: "float"
+      low: 0.4
+      high: 0.8
+    
+    degrees:
+      type: "float"
+      low: 12.0
+      high: 25.0
+    
+    translate:
+      type: "float"
+      low: 0.25
+      high: 0.5
+    
+    scale:
+      type: "float"
+      low: 0.15
+      high: 0.35
+  
+  # 🔵 中低優先度參數
+  low_priority:
+    fliplr:
+      type: "float"
+      low: 0.2
+      high: 0.4
+    
+    flipud:
+      type: "float"
+      low: 0.2
+      high: 0.45
+    
+    mosaic:
+      type: "float"
+      low: 0.05
+      high: 0.15
+    
+    mixup:
+      type: "float"
+      low: 0.05
+      high: 0.15
+
+# 評分策略配置
+scoring:
+  # 主要指標
+  primary_metric: "bear_focused_score"
+  
+  # 黑熊專用評分配置
+  bear_focused:
+    # 權重配置
+    weights:
+      precision_bear: 0.3       # 黑熊精確度權重
+      recall_bear: 0.3          # 黑熊召回率權重
+      f1_bear: 0.2              # 黑熊 F1 分數權重
+      map50: 0.15               # mAP@0.5 權重
+      map95: 0.05               # mAP@0.5:0.95 權重
+    
+    # 懲罰因子
+    penalties:
+      false_positive: 0.1       # 假陽性懲罰
+      false_negative: 0.15      # 假陰性懲罰 (更重要)
+    
+    # 最小閾值
+    min_thresholds:
+      precision_bear: 0.7       # 黑熊最小精確度
+      recall_bear: 0.6          # 黑熊最小召回率
+
+# 兩階段優化配置
+two_stage:
+  enable: true                  # 是否啟用兩階段優化
+  
+  # 第一階段: YOLOv8 內建 tune()
+  stage1:
+    enable: true                # 是否啟用第一階段
+    iterations: 30              # YOLOv8 tune() 迭代次數
+    use_results: true           # 是否使用第一階段結果
+  
+  # 第二階段: Optuna 精細搜索
+  stage2:
+    enable: true                # 是否啟用第二階段
+    trials: 50                  # Optuna 試驗次數
+    use_stage1_best: true       # 是否基於第一階段最佳結果
+
+# 早停配置 (針對優化過程)
+early_stopping:
+  enable: true                  # 是否啟用早停
+  patience: 10                  # 無改善容忍輪數
+  min_delta: 0.001              # 最小改善幅度
+  restore_best: true            # 是否恢復最佳結果
+
+# 結果保存配置
+results:
+  save_dir: "./results/optimization"
+  
+  # 保存內容
+  save_study: true              # 保存完整研究
+  save_best_params: true        # 保存最佳參數
+  save_trials_df: true          # 保存試驗數據框
+  save_plots: true              # 保存優化圖表
+  
+  # 文件格式
+  params_format: ["json", "yaml"]  # 參數保存格式
+  
+  # 圖表配置
+  plots:
+    optimization_history: true  # 優化歷史
+    param_importances: true     # 參數重要性
+    parallel_coordinate: true   # 平行坐標圖
+    slice_plot: true            # 切片圖
+
+# 監控配置
+monitoring:
+  # 實時監控
+  real_time: true               # 實時監控
+  update_interval: 10           # 更新間隔 (秒)
+  
+  # 通知配置
+  notifications:
+    enable: false               # 是否啟用通知
+    methods: ["console"]        # 通知方式
+    
+  # 資源監控
+  resource_monitoring:
+    enable: true                # 監控系統資源
+    log_interval: 60            # 記錄間隔 (秒)
+
+# 錯誤處理配置
+error_handling:
+  # 重試策略
+  max_retries: 3                # 最大重試次數
+  retry_delay: 5                # 重試延遲 (秒)
+  
+  # 錯誤類型處理
+  handle_gpu_oom: true          # 處理 GPU 記憶體不足
+  handle_timeout: true          # 處理超時錯誤
+  handle_convergence: true      # 處理收斂錯誤
+  
+  # 降級策略
+  fallback_strategies:
+    reduce_batch_size: true     # 減少批次大小
+    switch_to_cpu: false        # 切換到 CPU (通常不建議)
+    reduce_image_size: false    # 減少圖片大小

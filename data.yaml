@@ -1,0 +1,8 @@
+names:
+- kumay
+- not_kumay
+nc: 2
+path: ./data
+test: images/val
+train: images/train
+val: images/val

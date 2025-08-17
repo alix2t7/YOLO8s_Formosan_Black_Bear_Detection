@@ -1,0 +1,105 @@
+name: 🚀 Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: 📦 創建 Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 檢出代碼
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 🐍 設置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: 📦 安裝依賴
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyYAML
+        
+    - name: 🧪 執行基本測試
+      run: |
+        python test_basic_functionality.py
+        
+    - name: 📋 生成 Release Notes
+      id: release_notes
+      run: |
+        # 提取版本號
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # 生成 Release Notes
+        cat > release_notes.md << EOF
+        # 🎉 YOLOv8s 台灣黑熊檢測系統 $VERSION
+        
+        ## ✨ 主要功能
+        
+        - 🐻 高精度台灣黑熊檢測和識別
+        - 🚀 完整的 YOLOv8s 訓練管道
+        - 📊 自動化超參數優化（Optuna）
+        - 📈 詳細的訓練監控和視覺化
+        - 🔧 彈性的配置管理系統
+        
+        ## 📦 系統要求
+        
+        - Python 3.8+
+        - PyTorch 1.8+
+        - CUDA 11.0+（GPU 訓練）
+        
+        ## 🚀 快速開始
+        
+        \`\`\`bash
+        # 克隆專案
+        git clone https://github.com/your-username/YOLOv8s_Pipeline.git
+        cd YOLOv8s_Pipeline
+        
+        # 安裝依賴
+        pip install -r requirements.txt
+        
+        # 執行基本功能測試
+        python test_basic_functionality.py
+        
+        # 開始訓練
+        python main.py --mode train
+        \`\`\`
+        
+        ## 📝 更新內容
+        
+        詳細更新內容請參考 [CHANGELOG.md](CHANGELOG.md)
+        
+        ## 🤝 貢獻
+        
+        感謝所有貢獻者的努力！詳細貢獻指南請參考 [CONTRIBUTING.md](CONTRIBUTING.md)
+        
+        ## 📄 授權
+        
+        本專案採用 MIT 授權條款 - 詳見 [LICENSE](LICENSE) 檔案
+        EOF
+        
+    - name: 📦 創建 Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.release_notes.outputs.version }}
+        release_name: YOLOv8s 台灣黑熊檢測系統 ${{ steps.release_notes.outputs.version }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        
+    - name: 📈 更新統計
+      run: |
+        echo "🎉 Release ${{ steps.release_notes.outputs.version }} 創建成功！"
+        echo "📊 專案統計："
+        echo "- Python 檔案數量: $(find src/ -name "*.py" | wc -l)"
+        echo "- 總程式碼行數: $(find src/ -name "*.py" -exec wc -l {} + | tail -1 | awk '{print $1}')"
+        echo "- 配置檔案數量: $(find config/ -name "*.yaml" | wc -l)"

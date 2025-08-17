@@ -1,0 +1,202 @@
+name: 🚀 YOLOv8s Pipeline CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-format:
+    name: 🔍 程式碼品質檢查
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 檢出代碼
+      uses: actions/checkout@v4
+      
+    - name: 🐍 設置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: 📦 安裝檢查工具
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort
+        
+    - name: 🔍 Flake8 語法檢查
+      run: |
+        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        
+    - name: 🎨 檢查代碼格式
+      run: |
+        black --check src/
+        isort --check-only src/
+
+  basic-tests:
+    name: 🧪 基本功能測試
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        
+    steps:
+    - name: 📥 檢出代碼
+      uses: actions/checkout@v4
+      
+    - name: 🐍 設置 Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: 📦 安裝基本依賴
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyYAML
+        
+    - name: 🧪 執行基本功能測試
+      run: |
+        python test_basic_functionality.py
+        
+    - name: 📋 檢查配置檔案
+      run: |
+        python -c "
+        import yaml
+        import os
+        
+        config_files = [
+          'config/base_config.yaml',
+          'config/training_config.yaml', 
+          'config/optuna_config.yaml'
+        ]
+        
+        for config_file in config_files:
+          if os.path.exists(config_file):
+            with open(config_file, 'r', encoding='utf-8') as f:
+              config = yaml.safe_load(f)
+              print(f'✅ {config_file} 載入成功')
+          else:
+            print(f'❌ {config_file} 不存在')
+            exit(1)
+        "
+
+  documentation-check:
+    name: 📚 文檔檢查
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 檢出代碼  
+      uses: actions/checkout@v4
+      
+    - name: 🔍 檢查必要檔案
+      run: |
+        echo "檢查必要檔案..."
+        
+        required_files=(
+          "README.md"
+          "LICENSE" 
+          "requirements.txt"
+          "CHANGELOG.md"
+          "CONTRIBUTING.md"
+          "main.py"
+        )
+        
+        for file in "${required_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file 存在"
+          else
+            echo "❌ $file 缺失"
+            exit 1
+          fi
+        done
+        
+    - name: 📝 檢查 Markdown 連結
+      uses: gaurav-nelson/github-action-markdown-link-check@v1
+      with:
+        use-quiet-mode: 'yes'
+        use-verbose-mode: 'no'
+        config-file: '.github/markdown-link-check-config.json'
+
+  security-scan:
+    name: 🔒 安全性掃描
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 檢出代碼
+      uses: actions/checkout@v4
+      
+    - name: 🐍 設置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: 🔒 安裝 Bandit
+      run: |
+        pip install bandit[toml]
+        
+    - name: 🔍 執行安全性掃描
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        bandit -r src/ || true
+
+  dependency-check:
+    name: 📦 依賴檢查
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 檢出代碼
+      uses: actions/checkout@v4
+      
+    - name: 🐍 設置 Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: 📦 檢查依賴版本
+      run: |
+        python -c "
+        import re
+        
+        with open('requirements.txt', 'r') as f:
+          lines = f.readlines()
+          
+        print('檢查 requirements.txt 格式...')
+        for i, line in enumerate(lines, 1):
+          line = line.strip()
+          if line and not line.startswith('#'):
+            if not re.match(r'^[a-zA-Z0-9_-]+[>=<,.\d\s]*$', line):
+              print(f'❌ 第{i}行格式錯誤: {line}')
+              exit(1)
+            else:
+              print(f'✅ 第{i}行格式正確: {line}')
+        
+        print('✅ requirements.txt 格式檢查通過')
+        "
+
+  build-status:
+    name: 📊 建置狀態總結
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, basic-tests, documentation-check, security-scan, dependency-check]
+    if: always()
+    
+    steps:
+    - name: 📊 檢查建置結果
+      run: |
+        echo "建置狀態總結:"
+        echo "程式碼品質檢查: ${{ needs.lint-and-format.result }}"
+        echo "基本功能測試: ${{ needs.basic-tests.result }}"
+        echo "文檔檢查: ${{ needs.documentation-check.result }}"
+        echo "安全性掃描: ${{ needs.security-scan.result }}"
+        echo "依賴檢查: ${{ needs.dependency-check.result }}"
+        
+        if [[ "${{ needs.lint-and-format.result }}" == "success" && 
+              "${{ needs.basic-tests.result }}" == "success" && 
+              "${{ needs.documentation-check.result }}" == "success" && 
+              "${{ needs.dependency-check.result }}" == "success" ]]; then
+          echo "🎉 所有檢查通過!"
+        else
+          echo "❌ 部分檢查失敗"
+          exit 1
+        fi

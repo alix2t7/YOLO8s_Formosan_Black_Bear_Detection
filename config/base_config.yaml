@@ -1,0 +1,163 @@
+# YOLOv8s 基礎配置文件
+# 適用於黑熊辨識任務
+
+# 項目基本信息
+project:
+  name: "黑熊辨識 YOLOv8s"
+  version: "1.0.0"
+  description: "台灣黑熊自動辨識系統"
+  created_date: "2025-08-08"
+
+# 模型配置
+model:
+  name: "yolov8s"               # 模型大小: n, s, m, l, x
+  num_classes: 2                # 類別數量 (kumay, not_kumay)
+  input_size: 640               # 輸入圖片大小
+  pretrained: true              # 是否使用預訓練權重
+  
+# 數據集配置
+dataset:
+  # 動態路徑配置 (優先級順序)
+  search_paths:
+    - "/kaggle/input/formosanbear-cleansed-aug-boar-dataset"
+    - "./data/dataset"
+    - "../dataset"
+    - "/content/dataset"  # Colab 路徑
+  
+  # Kaggle 環境路徑
+  kaggle:
+    input_path: "/kaggle/input/formosanbear-cleansed-aug-boar-dataset"
+    working_path: "/kaggle/working/dataset"
+  
+  # 本地環境路徑 (可根據需要修改)
+  local:
+    input_path: "./data/dataset"
+    working_path: "./data/working"
+  
+  # Colab 環境路徑
+  colab:
+    input_path: "/content/dataset"
+    working_path: "/content/working"
+  
+  # 數據集結構
+  structure:
+    train_images: "images/train"
+    val_images: "images/val"
+    train_labels: "labels/train"
+    val_labels: "labels/val"
+    config_file: "data.yaml"  # 新增配置文件路徑
+  
+  # 類別名稱 (與 training_config.yaml 保持一致)
+  class_names:
+    - "kumay"        # 黑熊
+    - "not_kumay"    # 非黑熊
+  
+  # 數據處理選項
+  copy_dataset: false           # 是否複製數據集 (false 節省空間)
+  validate_data: true           # 是否驗證數據完整性
+  auto_detect_path: true        # 自動檢測有效的數據集路徑
+
+# GPU 配置
+gpu:
+  # 自動檢測配置
+  auto_detect: true             # 自動檢測最佳 GPU 配置
+  
+  # 手動配置 (當 auto_detect=false 時使用)
+  use_multi_gpu: true           # 是否使用多GPU
+  device_ids: [0, 1]            # GPU 設備 ID
+  
+  # 性能配置
+  mixed_precision: true         # 混合精度訓練
+  cuda_optimizations: true      # CUDA 優化
+
+# 訓練基礎配置
+training:
+  # 核心參數
+  epochs: 300                   # 訓練輪數
+  batch_size: 64                # 基礎批次大小
+  patience: 40                  # 早停耐心值
+  
+  # 檢查點和保存
+  save_period: 10               # 每N個epoch保存一次
+  save_best: true               # 保存最佳模型
+  save_last: true               # 保存最後模型
+  
+  # 訓練策略
+  resume_training: true         # 是否自動恢復訓練
+  error_recovery: true          # 是否啟用錯誤恢復
+  max_retries: 3                # 最大重試次數
+
+# 快取配置
+cache:
+  # 快取策略
+  enable: true                  # 是否啟用快取
+  auto_strategy: true           # 自動選擇快取策略
+  
+  # 快取路徑候選 (按優先級排序)
+  paths:
+    - "/kaggle/working/yolo_cache"
+    - "/kaggle/working/cache"
+    - "/tmp/yolo_cache"
+    - "/dev/shm/yolo_cache"
+  
+  # Worker 配置
+  workers: "auto"               # 數據載入 worker 數量
+
+# 日誌配置
+logging:
+  level: "INFO"                 # 日誌級別
+  format: "[%(asctime)s] %(levelname)s: %(message)s"
+  
+  # 日誌輸出
+  console: true                 # 控制台輸出
+  file: true                    # 文件輸出
+  
+  # 日誌文件配置
+  log_dir: "./logs"
+  log_file: "yolov8s_{timestamp}.log"
+  
+  # 進度顯示
+  progress_bar: true            # 顯示進度條
+  verbose: true                 # 詳細輸出
+
+# 結果保存配置
+results:
+  # 保存目錄
+  base_dir: "./results"
+  
+  # 子目錄結構
+  structure:
+    models: "models"
+    logs: "logs"
+    plots: "plots"
+    configs: "configs"
+    checkpoints: "checkpoints"
+  
+  # 保存選項
+  save_plots: true              # 保存訓練圖表
+  save_configs: true            # 保存配置文件
+  save_metrics: true            # 保存指標數據
+  
+  # 清理選項
+  cleanup_temp: false           # 訓練後清理臨時文件
+  max_checkpoints: 5            # 最大保留檢查點數量
+
+# 環境配置
+environment:
+  # 平台檢測
+  auto_detect_platform: true    # 自動檢測運行平台
+  
+  # 平台特定配置
+  kaggle:
+    time_limit: 10              # Kaggle 時間限制 (小時)
+    gpu_memory_fraction: 0.9    # GPU 記憶體使用比例
+  
+  local:
+    time_limit: 24              # 本地訓練時間限制 (小時)
+    gpu_memory_fraction: 0.8    # GPU 記憶體使用比例
+  
+  # 警告抑制
+  suppress_warnings: true       # 抑制 libpng 等警告
+  
+  # 隨機種子
+  random_seed: 42               # 隨機種子 (可重現性)
