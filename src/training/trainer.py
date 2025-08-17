@@ -4,10 +4,11 @@ YOLOv8s 訓練器 - 修復版本
 """
 
 import os
-import yaml
-import torch
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Any, Dict, List, Optional, Union
+
+import torch
+import yaml
 from ultralytics import YOLO
 
 

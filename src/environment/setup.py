@@ -3,13 +3,13 @@
 提供環境檢測、安裝和配置功能
 """
 
+import importlib.util
 import os
-import sys
 import platform
 import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-import importlib.util
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class EnvironmentSetup:

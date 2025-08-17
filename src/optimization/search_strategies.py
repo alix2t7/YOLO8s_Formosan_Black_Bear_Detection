@@ -2,9 +2,10 @@
 優化策略和搜索空間定義
 """
 
-from typing import Dict, Any, List, Tuple
+from typing import Any, Dict, List, Tuple
+
 import optuna
-from optuna.samplers import TPESampler, CmaEsSampler, RandomSampler
+from optuna.samplers import CmaEsSampler, RandomSampler, TPESampler
 
 
 class SearchStrategies:

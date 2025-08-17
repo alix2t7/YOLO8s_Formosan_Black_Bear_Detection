@@ -22,11 +22,12 @@ if sys.version_info < (3, 8):
     raise RuntimeError("需要 Python 3.8 或更高版本")
 
 # 導入核心模組
-from .utils import logger, gpu_manager, file_manager
-from .environment import setup, manager
 from .data import loader, validator
+from .environment import manager, setup
 from .optimization import optuna_optimizer, search_strategies
-from .training import trainer, callbacks, utils as training_utils
+from .training import callbacks, trainer
+from .training import utils as training_utils
+from .utils import file_manager, gpu_manager, logger
 
 # 模組可用性檢查
 try:

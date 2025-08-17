@@ -2,13 +2,14 @@
 數據驗證器
 """
 
+import json
 import os
-import yaml
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import cv2
 import numpy as np
-from typing import Dict, Any, List, Tuple, Optional
-from pathlib import Path
-import json
+import yaml
 
 
 class DataValidator:

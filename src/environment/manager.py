@@ -3,14 +3,15 @@
 提供環境狀態監控和管理功能
 """
 
+import json
 import os
-import psutil
+import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable
-import threading
-import json
+from typing import Any, Callable, Dict, List, Optional
+
+import psutil
 
 
 class EnvironmentManager:
@@ -213,7 +214,7 @@ class EnvironmentManager:
                     warnings.append(
                         {
                             "type": "gpu_memory_high",
-                            "message": f'GPU {gpu["id"]} 記憶體使用率過高: {gpu_memory_percent:.1f}%',
+                            "message": f"GPU {gpu['id']} 記憶體使用率過高: {gpu_memory_percent:.1f}%",
                             "value": gpu_memory_percent,
                             "threshold": self.thresholds["gpu_memory_percent"],
                             "gpu_id": gpu["id"],

@@ -2,9 +2,9 @@
 訓練回調函數
 """
 
-from typing import Dict, Any, Callable, List
 import time
 from datetime import datetime
+from typing import Any, Callable, Dict, List
 
 
 class TrainingCallbacks:

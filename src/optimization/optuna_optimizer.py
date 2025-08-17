@@ -3,20 +3,21 @@ Optuna 超參數優化器
 基於 YOLOv8_Optuna_Optimizer.py
 """
 
-import optuna
-import yaml
 import json
+import logging
 import os
 import time
-from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
+import optuna
+import yaml
 from ultralytics import YOLO
-from ..utils.logger import YOLOLogger
-from ..utils.gpu_manager import GPUManager
-from ..utils.file_manager import FileManager
+
 from ..environment.manager import EnvironmentManager
+from ..utils.file_manager import FileManager
+from ..utils.gpu_manager import GPUManager
+from ..utils.logger import YOLOLogger
 
 
 class OptunaOptimizer:
@@ -271,7 +272,7 @@ class OptunaOptimizer:
         # 保存最終結果
         final_results = self._save_optimization_results(study, elapsed_time)
 
-        self.logger.info(f"✅ 優化完成！用時: {elapsed_time/3600:.2f} 小時")
+        self.logger.info(f"✅ 優化完成！用時: {elapsed_time / 3600:.2f} 小時")
         self.logger.info(f"🏆 最佳分數: {study.best_value:.4f}")
 
         return final_results

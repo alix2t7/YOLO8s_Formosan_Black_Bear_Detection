@@ -4,11 +4,11 @@
 """
 
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union, Dict, Any
-import os
+from typing import Any, Dict, Optional, Union
 
 
 class ColoredFormatter(logging.Formatter):
@@ -110,6 +110,7 @@ class YOLOLogger:
     def log_system_info(self):
         """記錄系統信息"""
         import platform
+
         import psutil
 
         self.info("=== 系統信息 ===")
@@ -153,7 +154,7 @@ class YOLOLogger:
 
         self.info(f"{emoji} " + "=" * 50)
         self.info(f"{emoji} 訓練{status}")
-        self.info(f"{emoji} 總耗時: {duration:.2f} 秒 ({duration/3600:.2f} 小時)")
+        self.info(f"{emoji} 總耗時: {duration:.2f} 秒 ({duration / 3600:.2f} 小時)")
         self.info(f"{emoji} " + "=" * 50)
 
     def log_optimization_start(self, n_trials: int):
@@ -235,8 +236,8 @@ def get_logger() -> YOLOLogger:
 
 def suppress_warnings():
     """抑制常見警告"""
-    import warnings
     import os
+    import warnings
 
     # 抑制各種警告
     warnings.filterwarnings("ignore", ".*iCCP.*", UserWarning)
