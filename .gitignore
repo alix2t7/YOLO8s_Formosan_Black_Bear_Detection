@@ -184,10 +184,24 @@ logs/*
 *.onnx
 *.weights
 *.safetensors
+*.engine
+*.trt
+*.pb
 
 # Training outputs
 runs/
 wandb/
+mlruns/
+tensorboard/
+
+# YOLOv8/Ultralytics specific
+yolo*/
+ultralytics/
+*.yaml.bak
+
+# Optuna optimization
+optuna_study.db
+optuna_*.db
 
 # OS generated files
 .DS_Store
