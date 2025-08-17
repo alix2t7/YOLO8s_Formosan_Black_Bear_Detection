@@ -195,7 +195,7 @@ python main.py --mode setup
 
 如果您有任何問題：
 
-1. 查看現有的 [Issues](../../issues)
+1. 查看現有的 [Issues](https://github.com/alix2t7/YOLOv8s_0808_pipeline/issues)
 2. 查看 [README.md](README.md) 和相關文檔
 3. 創建新的 Issue 詢問問題
 4. 加入我們的討論區
